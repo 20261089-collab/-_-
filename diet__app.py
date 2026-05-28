@@ -7,7 +7,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. 음식 데이터 정의 (is_healthy가 True인 건강한 음식만 추천에 들어갑니다!)
+# 2. 음식 데이터 정의 (다이어트 건강도 태그 'is_healthy' 반영)
 foods = {
     "김밥": {"calorie": 450, "type": "한식", "is_healthy": True},
     "참치김밥": {"calorie": 500, "type": "한식", "is_healthy": True},
@@ -102,7 +102,7 @@ for food in selected_foods:
     else:
         unhealthy_count += 1
 
-# 음식 분류 결과 화면에 보여주기
+# 음식 분류 결과 화면에 예쁘게 갈라주기
 if selected_foods:
     col_h, col_uh = st.columns(2)
     with col_h:
@@ -120,26 +120,26 @@ if selected_foods:
 st.divider()
 st.header("🎮 수룡이의 현재 상태")
 
-# 수룡이 상태 결정 로직
+# 수룡이 상태 결정 로직 (칼로리 오차 범위 밸런스 패치 적용!)
 if total == 0:
     suryong_img = "normal_suryong.jpg"
     suryong_msg = "배가 고파요! 오늘 먹은 음식을 기록해주세요."
     status_color = "info"
-elif total > daily_calorie:
+elif total > daily_calorie + 150:  # 🚀 단 1칼로리가 아니라 150kcal 초과 시 살찜 처리
     suryong_img = "fat_suryong.jpg"
-    suryong_msg = f"앗! 권장 칼로리({daily_calorie}kcal)를 초과했어요! 수룡이가 포동포동하게 살이 쪘습니다. 😭"
+    suryong_msg = f"앗! 권장 칼로리({daily_calorie}kcal)를 많이 초과했어요! 수룡이가 포동포동하게 살이 쪘습니다. 😭"
     status_color = "error"
-elif unhealthy_count > 0 and unhealthy_count >= healthy_count:
+elif unhealthy_count > 0 and unhealthy_count >= healthy_count:  # 🚀 칼로리가 맞아도 불량 식단이 많을 때 살찜
     suryong_img = "fat_suryong.jpg"
-    suryong_msg = f"식단에 다이어트를 방해하는 음식이 너무 많아요! 수룡이 몸이 붓고 살이 찌려고 해요! 👿"
+    suryong_msg = f"식단에 다이어트를 방해하는 음식을 많이 먹었어요! 수룡이 몸이 붓고 살이 찌려고 해요! 👿"
     status_color = "error"
-elif total < daily_calorie - 500:
+elif total < daily_calorie - 400:  # 🚀 400kcal 이상 극단적으로 안 먹으면 홀쭉이 처리
     suryong_img = "slim_suryong.jpg"
     suryong_msg = "영양이 너무 부족해요! 수룡이가 배가 고파 기운 없이 홀쭉해졌어요.. 🥺"
     status_color = "warning"
-else:
+else:  # 🚀 그 사이의 안정적인 칼로리 섭취 구간은 성공!
     suryong_img = "normal_suryong.jpg"
-    suryong_msg = "완벽해요! 클린하고 건강하게 칼로리를 채웠습니다. 수룡이가 따봉을 날립니다! 👍"
+    suryong_msg = "완벽해요! 클린하고 건강하게 목표 칼로리 채우기 성공! 수룡이가 따봉을 날립니다! 👍"
     status_color = "success"
 
 # 화면 레이아웃 분할
@@ -152,10 +152,11 @@ with col_char:
         st.error(f"⚠️ 저장소에서 '{suryong_img}' 파일을 찾을 수 없습니다.")
 
 with col_info:
+    # 📛 이름 조사 가독성 패치 (받침 유무 판단하여 '이' 자동 선택)
     if name:
         last_char = name[-1]
         if (ord(last_char) - 0xAC00) % 28 > 0:
-            name_with_josa = f"{name}이"
+            name_with_josa = f"{name}님"
         else:
             name_with_josa = name
         st.subheader(f"🐲 {name_with_josa}의 수룡이")
@@ -182,18 +183,18 @@ tab1, tab2 = st.tabs(["🍱 추천 식단", "🏃 추천 운동"])
 with tab1:
     st.write("✨ **수룡이가 엄선한 건강한 다이어트 추천 메뉴**")
 
-    # 🚨 [핵심 변경 조건] 선호 식단 유형과 알레르기를 만족하면서, 무조건 'is_healthy': True 인 음식만 필터링!
+    # 🚀 'is_healthy': True 인 건강한 식단만 골라 추천하는 철벽 방어 시스템!
     recommended = [
         f for f in foods
         if foods[f]["type"] == food_style
-           and foods[f]["is_healthy"] == True  # <--- 이 조건이 불량 식단을 완벽히 차단합니다!
+           and foods[f]["is_healthy"] == True
            and allergy not in f
            and dislike not in f
     ]
 
-    # 만약 유저가 '중식'이나 '패스트푸드'를 골라서 건강한 추천 식단이 0개일 때 작동하는 예외 처리
+    # 예외 처리: 패스트푸드 같은 카테고리를 골라 건강한 추천 요리가 0개일 때
     if not recommended:
-        st.warning(f"선택하신 '{food_style}' 카테고리에는 다이어트 추천 식단이 없습니다. 수룡이의 추천 클린 식단을 제공합니다!")
+        st.warning(f"선택하신 '{food_style}' 카테고리에는 다이어트 전용 추천 식단이 없습니다. 대신 수룡이의 추천 클린 식단을 제공합니다!")
         recommended = ["샐러드", "닭가슴살", "고구마", "계란", "현미밥"]
 
     for f in recommended:
@@ -202,6 +203,7 @@ with tab1:
 with tab2:
     exercise_time = st.slider("운동 시간 선택(분)", 10, 120, 30, key="ex_slider")
 
+    # 🚀 사용자가 설정한 '분' 단위 시간에 정밀 매칭되는 실시간 분배 운동 로직
     if goal == "감량":
         if exercise_time <= 20:
             exercise = f"빠르게 걷기 {exercise_time}분 (가볍게 땀 흘리기!)"
@@ -217,7 +219,7 @@ with tab2:
             exercise = f"스쿼트 30개 + 푸쉬업 20개 + 런지 20개"
         else:
             exercise = f"부위별 웨이트 트레이닝 {exercise_time - 10}분 + 전신 스트레칭 10분"
-    else:
+    else:  # 유지
         if exercise_time <= 20:
             exercise = f"가벼운 전신 스트레칭 및 제자리 걷기 {exercise_time}분"
         elif exercise_time <= 40:
