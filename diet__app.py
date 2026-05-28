@@ -122,23 +122,23 @@ st.header("🎮 수룡이의 현재 상태")
 
 # 수룡이 상태 결정 로직
 if total == 0:
-    suryong_img = "normal_suryong.jpg.jpg.jpg"
+    suryong_img = "normal_suryong.jpg"
     suryong_msg = "배가 고파요! 오늘 먹은 음식을 기록해주세요."
     status_color = "info"
 elif total > daily_calorie:
-    suryong_img = "fat_suryong.jpg.jpg.jpg"
+    suryong_img = "fat_suryong.jpg"
     suryong_msg = f"앗! 권장 칼로리({daily_calorie}kcal)를 초과했어요! 수룡이가 포동포동하게 살이 쪘습니다. 😭"
     status_color = "error"
 elif unhealthy_count > 0 and unhealthy_count >= healthy_count:
-    suryong_img = "fat_suryong.jpg.jpg.jpg"
+    suryong_img = "fat_suryong.jpg"
     suryong_msg = f"식단에 다이어트를 방해하는 음식이 너무 많아요! 수룡이 몸이 붓고 살이 찌려고 해요! 👿"
     status_color = "error"
 elif total < daily_calorie - 500:
-    suryong_img = "slim_suryong.jpg.jpg.jpg"
+    suryong_img = "slim_suryong.jpg"
     suryong_msg = "영양이 너무 부족해요! 수룡이가 배가 고파 기운 없이 홀쭉해졌어요.. 🥺"
     status_color = "warning"
 else:
-    suryong_img = "normal_suryong.jpg.jpg.jpg"
+    suryong_img = "normal_suryong.jpg"
     suryong_msg = "완벽해요! 클린하고 건강하게 칼로리를 채웠습니다. 수룡이가 따봉을 날립니다! 👍"
     status_color = "success"
 
