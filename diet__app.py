@@ -7,6 +7,35 @@ st.set_page_config(
     layout="centered"
 )
 
+# [새로 추가된 함수들] ---------------------------------------------
+def calculate_bmi(weight, height):
+    h = height / 100
+    return round(weight / (h**2), 1)
+
+def calculate_bmr(weight, height, age, gender):
+    if gender == "남자":
+        return round(
+            10 * weight +
+            6.25 * height -
+            5 * age + 5
+        )
+    return round(
+        10 * weight +
+        6.25 * height -
+        5 * age - 161
+    )
+
+def calculate_tdee(bmr, activity):
+    factors = {
+        "거의 안 움직임": 1.2,
+        "가벼운 활동": 1.375,
+        "보통": 1.55,
+        "활발함": 1.725,
+        "매우 활발": 1.9
+    }
+    return round(bmr * factors[activity])
+# -----------------------------------------------------------------
+
 # 2. 음식 데이터 정의 (다이어트 건강도 태그 'is_healthy' 반영)
 foods = {
     "김밥": {"calorie": 450, "type": "한식", "is_healthy": True},
@@ -51,37 +80,32 @@ gender = st.selectbox("성별", ["여자", "남자"])
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    age = st.number_input("나이", min_value=1, step=1)
+    age = st.number_input("나이", min_value=1, step=1, value=25)
 with col2:
-    height = st.number_input("키(cm)", min_value=1.0)
+    height = st.number_input("키(cm)", min_value=1.0, value=165.0)
 with col3:
-    weight = st.number_input("몸무게(kg)", min_value=1.0)
+    weight = st.number_input("몸무게(kg)", min_value=1.0, value=60.0)
 
-activity = st.selectbox("활동량", ["거의 안 움직임", "보통", "운동 자주 함"])
+# 제공해주신 factors 딕셔너리 키 값에 맞게 리스트 수정
+activity = st.selectbox("활동량", ["거의 안 움직임", "가벼운 활동", "보통", "활발함", "매우 활발"])
 goal = st.selectbox("목표", ["감량", "유지", "근육증가"])
 
 allergy = st.text_input("알레르기 음식", value="없음")
 dislike = st.text_input("싫어하는 음식", value="없음")
 food_style = st.selectbox("선호 식단", ["한식", "가벼운식단", "단백질", "간단식", "분식", "중식", "양식", "일식", "간식", "패스트푸드"])
 
-# 기초대사량 및 권장 칼로리 계산
-if gender == "남자":
-    bmr = 10 * weight + 6.25 * height - 5 * age + 5
-else:
-    bmr = 10 * weight + 6.25 * height - 5 * age - 161
+# [함수를 활용한 건강 지표 계산]
+user_bmi = calculate_bmi(weight, height)
+user_bmr = calculate_bmr(weight, height, age, gender)
+user_tdee = calculate_tdee(user_bmr, activity)
 
-if activity == "거의 안 움직임":
-    daily_calorie = bmr * 1.2
-elif activity == "보통":
-    daily_calorie = bmr * 1.55
-else:
-    daily_calorie = bmr * 1.725
-
+# 목표에 따른 최종 권장 칼로리 설정
 if goal == "감량":
-    daily_calorie -= 300
+    daily_calorie = user_tdee - 300
 elif goal == "근육증가":
-    daily_calorie += 300
-daily_calorie = int(daily_calorie)
+    daily_calorie = user_tdee + 300
+else:
+    daily_calorie = user_tdee
 
 st.divider()
 
@@ -120,24 +144,24 @@ if selected_foods:
 st.divider()
 st.header("🎮 수룡이의 현재 상태")
 
-# 수룡이 상태 결정 로직 (칼로리 오차 범위 밸런스 패치 적용!)
+# 수룡이 상태 결정 로직
 if total == 0:
     suryong_img = "normal_suryong.jpg"
-    suryong_msg = "배가 고파요! 오늘 먹은 음식을 기록해주세요."
+    suryong_msg = f"배가 고파요! 오늘 먹은 음식을 기록해주세요. (현재 BMI: {user_bmi})"
     status_color = "info"
-elif total > daily_calorie + 150:  # 🚀 단 1칼로리가 아니라 150kcal 초과 시 살찜 처리
+elif total > daily_calorie + 150:
     suryong_img = "fat_suryong.jpg"
     suryong_msg = f"앗! 권장 칼로리({daily_calorie}kcal)를 많이 초과했어요! 수룡이가 포동포동하게 살이 쪘습니다. 😭"
     status_color = "error"
-elif unhealthy_count > 0 and unhealthy_count >= healthy_count:  # 🚀 칼로리가 맞아도 불량 식단이 많을 때 살찜
+elif unhealthy_count > 0 and unhealthy_count >= healthy_count:
     suryong_img = "fat_suryong.jpg"
     suryong_msg = f"식단에 다이어트를 방해하는 음식을 많이 먹었어요! 수룡이 몸이 붓고 살이 찌려고 해요! 👿"
     status_color = "error"
-elif total < daily_calorie - 400:  # 🚀 400kcal 이상 극단적으로 안 먹으면 홀쭉이 처리
+elif total < daily_calorie - 400:
     suryong_img = "slim_suryong.jpg"
     suryong_msg = "영양이 너무 부족해요! 수룡이가 배가 고파 기운 없이 홀쭉해졌어요.. 🥺"
     status_color = "warning"
-else:  # 🚀 그 사이의 안정적인 칼로리 섭취 구간은 성공!
+else:
     suryong_img = "normal_suryong.jpg"
     suryong_msg = "완벽해요! 클린하고 건강하게 목표 칼로리 채우기 성공! 수룡이가 따봉을 날립니다! 👍"
     status_color = "success"
@@ -152,7 +176,7 @@ with col_char:
         st.error(f"⚠️ 저장소에서 '{suryong_img}' 파일을 찾을 수 없습니다.")
 
 with col_info:
-    # 📛 이름 조사 가독성 패치 (받침 유무 판단하여 '이' 자동 선택)
+    # 이름 라벨 판단 패치
     if name:
         last_char = name[-1]
         if (ord(last_char) - 0xAC00) % 28 > 0:
@@ -172,7 +196,9 @@ with col_info:
     else:
         st.success(suryong_msg)
 
-    st.metric("목표 칼로리", f"{daily_calorie} kcal")
+    # 대시보드 스펙 출력 개선 (BMI 수치 추가!)
+    st.metric("나의 BMI 지수", f"{user_bmi}")
+    st.metric("목표 권장 칼로리 (TDEE 기반)", f"{daily_calorie} kcal")
     st.metric("현재 섭취량", f"{total} kcal", delta=total - daily_calorie, delta_color="inverse")
 
 st.divider()
@@ -183,7 +209,6 @@ tab1, tab2 = st.tabs(["🍱 추천 식단", "🏃 추천 운동"])
 with tab1:
     st.write("✨ **수룡이가 엄선한 건강한 다이어트 추천 메뉴**")
 
-    # 🚀 'is_healthy': True 인 건강한 식단만 골라 추천하는 철벽 방어 시스템!
     recommended = [
         f for f in foods
         if foods[f]["type"] == food_style
@@ -192,7 +217,6 @@ with tab1:
            and dislike not in f
     ]
 
-    # 예외 처리: 패스트푸드 같은 카테고리를 골라 건강한 추천 요리가 0개일 때
     if not recommended:
         st.warning(f"선택하신 '{food_style}' 카테고리에는 다이어트 전용 추천 식단이 없습니다. 대신 수룡이의 추천 클린 식단을 제공합니다!")
         recommended = ["샐러드", "닭가슴살", "고구마", "계란", "현미밥"]
@@ -203,7 +227,6 @@ with tab1:
 with tab2:
     exercise_time = st.slider("운동 시간 선택(분)", 10, 120, 30, key="ex_slider")
 
-    # 🚀 사용자가 설정한 '분' 단위 시간에 정밀 매칭되는 실시간 분배 운동 로직
     if goal == "감량":
         if exercise_time <= 20:
             exercise = f"빠르게 걷기 {exercise_time}분 (가볍게 땀 흘리기!)"
