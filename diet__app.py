@@ -66,23 +66,21 @@ foods = {
     "초밥": {"calorie": 500, "type": "일식", "is_healthy": True}
 }
 
-# 🔘 [핵심 변경] 앱 로고와 제목 배치 (기존 st.title()을 대체)
-title_col1, title_col2 = st.columns([1, 4]) # 컬럼 너비 비율 설정
+# 🔘 [디자인 변경] 로고 크기 및 여백 밸런스 조정
+title_col1, title_col2 = st.columns([1.3, 4]) # 로고 칸을 기존보다 더 넓게 확장
 
 with title_col1:
     try:
-        # icon.png 이미지를 로고로 사용 (확장자는 실제 파일에 맞게 수정 가능)
-        # 너비는 제목과 어울리도록 조절 (예: 80)
-        st.image("icon.png", width=80) 
+        # width를 80에서 150으로 키워 큼직하게 노출시킵니다.
+        st.image("icon.png", width=150) 
     except FileNotFoundError:
-        # 이미지 파일이 없는 경우, 에러 메시지 출력
         st.error("⚠️ 'icon.png' 파일을 찾을 수 없습니다. 이미지를 코드와 같은 폴더에 넣어주세요.")
     except Exception as e:
-        # 다른 에러가 발생한 경우, 에러 메시지 출력
         st.error(f"⚠️ 이미지를 불러오는 중 오류가 발생했습니다: {e}")
 
 with title_col2:
-    # 제목 텍스트 배치
+    # 대형 로고 높이에 맞추기 위해 상단 패딩용 빈 줄 살짝 삽입
+    st.write("")
     st.title("핏메이트")
     st.caption("식단과 운동 기록을 매일 매일 누적하는 똑똑한 다이어트 다이어리")
 
