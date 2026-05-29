@@ -184,68 +184,99 @@ with tab1:
     for f in recommended:
         st.write(f"- {f}: {foods[f]['calorie']} kcal")
 
-# 🏃 [대개편] BMI + 운동 부위 + 오늘 컨디션 기반 추천 시스템
+# 🏃 [대개편] 헬스장 여부 필터링 및 유튜브 가이드 연동 시스템
 with tab2:
     st.write("🏋️ **오늘 나의 상태에 딱 맞는 맞춤형 운동 프로그램**")
     
-    # 입력 UI 세분화
+    # 운동 입력 세분화 (헬스장 여부 추가!)
     ex_col1, ex_col2, ex_col3 = st.columns(3)
     with ex_col1:
-        target_part = st.selectbox("운동 부위 설정 🎯", ["전신", "상체 (가슴/팔)", "하체 (엉덩이/허벅지)", "코어 (복부/허리)"])
+        place_style = st.selectbox("운동 장소 선택 🏢", ["홈트레이닝 (집)", "헬스장 (Gym)"])
     with ex_col2:
-        condition = st.selectbox("오늘의 컨디션 🌡️", ["컨디션 최고! 🔥", "보통이에요 🙂", "피곤하고 무거워요 😴"])
+        target_part = st.selectbox("운동 부위 설정 🎯", ["전신", "상체 (가슴/팔)", "하체 (엉덩이/허벅지)", "코어 (복부/허리)"])
     with ex_col3:
-        exercise_time = st.slider("운동 시간 선택(분) ⏳", 10, 120, 30)
+        condition = st.selectbox("오늘의 컨디션 🌡️", ["컨디션 최고! 🔥", "보통이에요 🙂", "피곤하고 무거워요 😴"])
 
-    # 1단계: BMI 기반 강도 조절 (고체중자는 관절 부담을 줄이는 유산소/맨몸 운동 유도)
-    if user_bmi >= 25.0:
-        bmi_status = "고체중 (관절 보호 필요)"
-        intensity_modifier = 0.7  # 운동 개수나 세트 수를 유연하게 하향 조정
-    elif user_bmi < 18.5:
-        bmi_status = "저체중 (근력 강화 중심)"
-        intensity_modifier = 0.8  # 과도한 칼로리 소모 방지, 고중량 저반복 지향
+    # 가벼운 분석 안내
+    bmi_status = "고체중 (관절 보호)" if user_bmi >= 25.0 else ("저체중 (근력 강화)" if user_bmi < 18.5 else "정상 체중")
+    st.info(f"📋 **분석 리포트**: {bmi_status} 상태에 맞춤형 [{place_style} - {target_part}] 프로그램을 제안합니다.")
+
+    # -------------------------------------------------------------
+    # Case A: 홈트레이닝 (집) 루틴 분기
+    # -------------------------------------------------------------
+    if place_style == "홈트레이닝 (집)":
+        st.success(f"🏠 수룡이가 추천하는 오늘의 홈트 영상 리스트입니다. 원하는 영상을 선택해 따라해보세요!")
+        
+        if target_part == "전신":
+            st.markdown("- [추천 영상 1] [체지방 불태우는 전신 유산소 운동](https://youtu.be/gSz5n4sLENI?si=cF8UNYcY7O51vv3P)")
+            st.markdown("- [추천 영상 2] [층간소음 없는 전신 다이어트 루틴](https://youtu.be/dZbPtAgofwI?si=fGf1KFgcRwkiR2LU)")
+            with st.expander("ℹ️ 운동 가이드 설명 보기"):
+                st.write("집에서 별도의 기구 없이 체지방을 걷어낼 수 있는 맨몸 전신 루틴입니다. 컨디션에 맞춰 속도를 조절하세요.")
+                
+        elif target_part == "상체 (가슴/팔)":
+            st.markdown("- [추천 영상 1] [매끈하고 탄력 있는 상체 라인 만들기](https://youtu.be/2swcod5RYvU?si=PiprFfrdaW4POwqI)")
+            st.markdown("- [추천 영상 2] [초보자도 쉽게 따라하는 상체 무기구 루틴](https://youtu.be/T-bVqdhqW2U?si=O7RwqaDiVpioeKs7)")
+            with st.expander("ℹ️ 운동 가이드 설명 보기"):
+                st.write("굽은 등과 어깨를 펴주고 상체 탄력을 잡아주는 홈트레이닝입니다. 호흡에 집중하며 동작을 수행하세요.")
+                
+        elif target_part == "하체 (엉덩이/허벅지)":
+            st.markdown("- [추천 영상 1] [하체 비만 탈출 최고의 하체 스트레칭 & 운동](https://youtu.be/dpBYYEhdofI?si=OGiy3ZdSSRCdd__q)")
+            st.markdown("- [추천 영상 2] [허벅지 안쪽 살 파괴 맨몸 하체 루틴](https://youtu.be/NDsjmxTROEo?si=Kx28BPvmyhy8FS4u)")
+            with st.expander("ℹ️ 운동 가이드 설명 보기"):
+                st.write("골반 교정과 허벅지 라인 정리에 효과적인 운동입니다. 고체중이신 경우 무릎 관절 통증에 유의해 가동 범위를 조절하세요.")
+                
+        elif target_part == "코어 (복부/허리)":
+            st.markdown("- [추천 영상 1] [복부 지방 태우는 뱃살 타파 코어 루틴](https://youtu.be/jpTQdM7okkI?si=Iul-MhU62OggKOCP)")
+            st.markdown("- [추천 영상 2] [허리 통증 없이 안전하게 코어 강화하기](https://youtu.be/iOSYLKBk894?si=B606cM5LgWwS1T5j)")
+            with st.expander("ℹ️ 운동 가이드 설명 보기"):
+                st.write("단순히 윗몸일으키기 대신 허리를 안전하게 보호하면서 복부 심층 근육을 자극하는 똑똑한 코어 훈련입니다.")
+
+    # -------------------------------------------------------------
+    # Case B: 헬스장 (Gym) 루틴 분기
+    # -------------------------------------------------------------
     else:
-        bmi_status = "정상 체중"
-        intensity_modifier = 1.0
+        st.success(f"💪 수룡이가 추천하는 오늘의 헬스장 기구 루틴입니다. 기구 이름과 자세를 꼭 확인하세요!")
+        
+        if target_part == "상체 (가슴/팔)":
+            st.markdown("- [추천 강좌] [헬스장 상체 머신 완벽 가이드](https://youtu.be/Dw8PbebpF9w?si=5NIbj8CspBo_FwZl)")
+            
+            with st.expander("🏋️ [기구 1] 랫 풀 다운 (Lat Pull Down) - 등 운동"):
+                st.write("**자세한 설명 및 팁:**")
+                st.write("1. 바를 잡고 앉아 패드에 허벅지를 단단히 고정합니다.")
+                st.write("2. 가슴을 위로 활짝 열어준 상태에서 쇄골 방향으로 바를 당깁니다.")
+                st.write("3. 팔의 힘이 아니라 견갑골(날개뼈)을 아래로 접는다는 느낌으로 당겨야 등에 자극이 옵니다.")
+                st.write("⚠️ 주의: 허리가 과도하게 꺾이거나 어깨가 으쓱 올라가지 않도록 고정하세요.")
+                
+            with st.expander("🏋️ [기구 2] 체스트 프레스 (Chest Press) - 가슴 운동"):
+                st.write("**자세한 설명 및 팁:**")
+                st.write("1. 의자 높이를 조절하여 손잡이가 가슴 중앙 라인에 오도록 맞춥니다.")
+                st.write("2. 겨드랑이에 힘을 주고 손잡이를 앞으로 강하게 밀어줍니다.")
+                st.write("3. 버티면서 천천히 이완하며 처음 자세로 돌아옵니다.")
+                
+        elif target_part == "하체 (엉덩이/허벅지)":
+            st.markdown("- [추천 강좌] [헬스장 하체 머신 완벽 가이드](https://youtu.be/Na0Dhue1oqk?si=4VvIt7heeGHHV4Yd)")
+            
+            with st.expander("🏋️ [기구 1] 레그 프레스 (Leg Press) - 하체 전반"):
+                st.write("**자세한 설명 및 팁:**")
+                st.write("1. 발판에 발을 어깨너비로 올리고 엉덩이와 등을 등받이에 완전히 밀착시킵니다.")
+                st.write("2. 안전바를 풀고 무릎이 직각이 될 때까지 천천히 내렸다가, 발바닥 전체로 밀어 올립니다.")
+                st.write("⚠️ 주의: 무릎을 펼 때 관절을 튕기듯 끝까지 다 펴면 부상 위험이 있으니 95%만 펴주세요.")
+                
+            with st.expander("🏋️ [기구 2] 레그 익스텐션 (Leg Extension) - 허벅지 앞쪽"):
+                st.write("**자세한 설명 및 팁:**")
+                st.write("1. 의자에 앉아 발목 패드를 조절하여 정강이 아래쪽에 위치시킵니다.")
+                st.write("2. 손잡이를 꽉 쥐고 허벅지 앞쪽 힘으로 패드를 밀어 올리며 다리를 쭉 폅니다.")
+                st.write("3. 내릴 때도 무게를 버티며 천천히 내려옵니다.")
 
-    # 2단계: 컨디션 계수 설정
-    if condition == "컨디션 최고! 🔥":
-        cond_bonus = "고강도 트레이닝 가능"
-        set_count = int(4 * intensity_modifier) or 1
-    elif condition == "보통이에요 🙂":
-        cond_bonus = "적정 강도 유지"
-        set_count = int(3 * intensity_modifier) or 1
-    else:  # 피곤함
-        cond_bonus = "컨디션 조절 및 스트레칭 중심"
-        set_count = int(2 * intensity_modifier) or 1
+        elif target_part == "코어 (복부/허리)":
+            st.markdown("- [추천 숏츠 1] [행잉 레그 레이즈 꿀팁](https://youtube.com/shorts/ocMkMZya3ac?si=p89Dw6--vfRyqRNT)")
+            st.markdown("- [추천 숏츠 2] [케이블 크런치로 복근 만들기](https://youtube.com/shorts/bAFDWHA7fG8?si=ez9Av_2x54NiKXtj)")
+            with st.expander("ℹ️ 코어 운동 기구 및 자세 설명 보기"):
+                st.write("- **행잉 레그 레이즈**: 철봉에 매달려 복부 하부 힘으로 다리를 들어 올리는 상급자 코어 운동입니다. 반동을 줄여야 효과가 큽니다.")
+                st.write("- **케이블 크런치**: 케이블 머신의 무게를 활용해 무릎을 꿇고 복부를 수축시키는 상복부 기구 운동입니다. 허리가 아닌 명치를 쥐어짜는 느낌으로 진행하세요.")
 
-    # 3단계: 부위별 운동 풀(Pool) 정의
-    routines = {
-        "전신": ["버피 테스트", "점핑잭(팔벌려뛰기)", "슬로우 버피", "마운틴 클라이머"],
-        "상체 (가슴/팔)": ["푸쉬업", "무릎 대고 푸쉬업", "덤벨 숄더 프레스", "체어 딥스"],
-        "하체 (엉덩이/허벅지)": ["스쿼트", "와이드 스쿼트", "런지", "힙 브릿지"],
-        "코어 (복부/허리)": ["플랭크", "크런치", "레그 레이즈", "버드독"]
-    }
-
-    # 고체중(BMI >= 25) 관절 보호를 위한 운동 대체 로직
-    if user_bmi >= 25.0:
-        if "버피 테스트" in routines["전신"]: routines["전신"][0] = "슬로우 버피 (관절 보호)"
-        if "푸쉬업" in routines["상체 (가슴/팔)"]: routines["상체 (가슴/팔)"][0] = "무릎 대고 푸쉬업"
-        if "스쿼트" in routines["하체 (엉덩이/허벅지)"]: routines["하체 (엉덩이/허벅지)"][0] = "하프 스쿼트"
-
-    # 컨디션이 나쁘면 무조건 가벼운 맨몸/스트레칭 형태로 멘트 변경
-    selected_exercises = routines[target_part]
-    
-    st.info(f"📋 **분석 리포트**: {bmi_status} 상태이며, 오늘의 컨디션은 [{cond_bonus}]입니다.")
-    
-    st.write(f"💪 **추천 {target_part} 루틴 ({exercise_time}분 코스)**")
-    if condition == "피곤하고 무거워요 😴":
-        st.write(f"1️⃣ 가벼운 전신 스트레칭 및 폼롤러 루틴 (10분)")
-        st.write(f"2️⃣ 저강도 {selected_exercises[1]} 및 {selected_exercises[3]} (각 {set_count}세트, 무리하지 않기)")
-        st.write(f"3️⃣ 심호흡 및 마무리 걷기 ({exercise_time - 15 if exercise_time > 15 else 5}분)")
-    else:
-        st.write(f"1️⃣ 웜업: 제자리 걷기 또는 가벼운 스트레칭 (5분)")
-        st.write(f"2️⃣ 메인 운동: 아래 동작을 순서대로 진행하세요!")
-        for ex in selected_exercises[:3]:
-            st.write(f"   - **{ex}**: 15회씩 총 {set_count}세트 수행")
-        st.write(f"3️⃣ 유산소 마무리: 설정하신 시간에 맞춰 남은 **{max(10, exercise_time - 25)}분** 동안 유산소(걷기/인터벌)를 진행하세요.")
+        elif target_part == "전신":
+            st.markdown("- [추천 숏츠 1] [헬스장 전신 버닝 루틴 추천](https://youtube.com/shorts/ul5GqyTSSIk?si=8NaZLXCPr0ykjo4M)")
+            st.markdown("- [추천 숏츠 2] [머신을 활용한 전신 서킷 트레이닝](https://youtube.com/shorts/1FZYk9OyxV0?si=ZtGUBllTgPrKHTcM)")
+            with st.expander("ℹ️ 전신 운동 기구 및 가이드 보기"):
+                st.write("짧고 굵게 심폐지구력과 전신 근력을 동시에 사용하여 칼로리 소모를 극대화하는 서킷 프로그램입니다. 기구 간 휴식 시간을 30초 이내로 유지해 보세요.")
