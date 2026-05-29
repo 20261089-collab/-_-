@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date  # 👈 date 추가
 import os
-import calendar  # 👈 파이썬 기본 달력 라이브러리 통합
+import calendar
 
 # 1. 페이지 설정
 st.set_page_config(
@@ -245,14 +245,17 @@ with tab2:
         elif target_part == "전신":
             st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ul5GqyTSSIk?si=8NaZLXCPr0ykjo4M) / [추천 숏츠 2](https://youtube.com/shorts/1FZYk9OyxV0?si=ZtGUBllTgPrKHTcM)")
 
-    # 💾 [핵심 기능] 오늘 하루 기록 저장하기 버튼 추가
+    # 💾 [기능 개선] 오늘 하루 기록 저장하기 버튼 추가 및 날짜 선택 활성화
     st.subheader("💾 오늘의 다이어트 기록 최종 저장")
     st.caption("식단 입력과 위의 운동 설정을 마친 후 아래 버튼을 누르면 매일 기록이 파일에 누적됩니다.")
 
+    # 📅 사용자가 직접 날짜를 지정하여 기록할 수 있는 미니 달력 창 생성
+    record_date = st.date_input("기록을 저장할 날짜를 선택하세요 📆", value=date.today())
+
     if st.button("🔥 오늘의 기록 저장하기"):
-        # 저장할 데이터 구성 (캘린더 라이브러리 연동 편의를 위해 날짜를 YYYY-MM-DD 형태로 저장)
+        # 저장할 데이터 구성 (내가 'record_date'에서 선택한 날짜 글자 포맷으로 대입)
         new_data = {
-            "날짜": datetime.now().strftime("%Y-%m-%d"),
+            "날짜": record_date.strftime("%Y-%m-%d"),
             "이름": name if name else "사용자",
             "체중(kg)": weight,
             "BMI": user_bmi,
@@ -271,7 +274,7 @@ with tab2:
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
         df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
 
-        st.success("🎉 기록이 성공적으로 일지에 저장되었습니다! '나의 누적 다이어트 일지' 탭에서 확인하세요.")
+        st.success(f"🎉 {record_date.strftime('%Y-%m-%d')} 날짜로 기록이 성공적으로 일지에 저장되었습니다! '나의 누적 다이어트 일지' 탭에서 확인하세요.")
 
 # 📅 [핵심 기능] 저장된 다이어트 일지 조회 및 월별 운동 캘린더 통합 탭
 with tab3:
@@ -290,7 +293,6 @@ with tab3:
         with col_stat1:
             st.metric("총 기록 일수", f"{len(df_log)} 일")
         with col_stat2:
-            # 빈 값 방지 예외 처리 추가
             avg_cal = int(df_log["오늘 섭취량"].mean()) if len(df_log) > 0 else 0
             st.metric("평균 하루 섭취 칼로리", f"{avg_cal} kcal")
 
