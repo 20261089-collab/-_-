@@ -1,4 +1,7 @@
 import streamlit as st
+import pandas as pd
+from datetime import datetime
+import os
 
 # 1. 페이지 설정
 st.set_page_config(
@@ -6,6 +9,9 @@ st.set_page_config(
     page_icon="🐉",
     layout="centered"
 )
+
+# [데이터 영구 저장을 위한 파일 경로 설정]
+LOG_FILE = "diet_exercise_log.csv"
 
 # [계산 함수 정의] ---------------------------------------------
 def calculate_bmi(weight, height):
@@ -61,13 +67,13 @@ foods = {
 
 # 앱 제목
 st.title("🐉 핏메이트")
-st.caption("식단의 질과 칼로리를 모두 분석하는 똑똑한 다이어트 앱")
+st.caption("식단과 운동 기록을 매일 매일 누적하는 똑똑한 다이어트 다이어리")
 
 st.divider()
 
 # 3. 사용자 정보 입력
 st.header("👤 사용자 정보 입력")
-name = st.text_input("이름")
+name = st.text_input("이름", value="수룡이")
 gender = st.selectbox("성별", ["여자", "남자"])
 
 col1, col2, col3 = st.columns(3)
@@ -172,8 +178,8 @@ with col_info:
 
 st.divider()
 
-# 6. 추천 기능들
-tab1, tab2 = st.tabs(["🍱 추천 식단", "🏃 추천 운동"])
+# 6. 추천 기능 및 다이어트 일지 (탭 구성 변경)
+tab1, tab2, tab3 = st.tabs(["🍱 추천 식단", "🏃 추천 운동 및 설정", "📅 나의 누적 다이어트 일지"])
 
 with tab1:
     st.write("✨ **수룡이가 엄선한 건강한 다이어트 추천 메뉴**")
@@ -184,11 +190,10 @@ with tab1:
     for f in recommended:
         st.write(f"- {f}: {foods[f]['calorie']} kcal")
 
-# 🏃 [대개편] 헬스장 여부 필터링 및 유튜브 가이드 연동 시스템
+# 🏃 추천 운동 및 오늘 한 운동 확정 섹션
 with tab2:
     st.write("🏋️ **오늘 나의 상태에 딱 맞는 맞춤형 운동 프로그램**")
     
-    # 운동 입력 세분화 (헬스장 여부 추가!)
     ex_col1, ex_col2, ex_col3 = st.columns(3)
     with ex_col1:
         place_style = st.selectbox("운동 장소 선택 🏢", ["홈트레이닝 (집)", "헬스장 (Gym)"])
@@ -197,86 +202,103 @@ with tab2:
     with ex_col3:
         condition = st.selectbox("오늘의 컨디션 🌡️", ["컨디션 최고! 🔥", "보통이에요 🙂", "피곤하고 무거워요 😴"])
 
-    # 가벼운 분석 안내
     bmi_status = "고체중 (관절 보호)" if user_bmi >= 25.0 else ("저체중 (근력 강화)" if user_bmi < 18.5 else "정상 체중")
     st.info(f"📋 **분석 리포트**: {bmi_status} 상태에 맞춤형 [{place_style} - {target_part}] 프로그램을 제안합니다.")
 
-    # -------------------------------------------------------------
-    # Case A: 홈트레이닝 (집) 루틴 분기
-    # -------------------------------------------------------------
-    if place_style == "홈트레이닝 (집)":
-        st.success(f"🏠 수룡이가 추천하는 오늘의 홈트 영상 리스트입니다. 원하는 영상을 선택해 따라해보세요!")
-        
-        if target_part == "전신":
-            st.markdown("- [추천 영상 1] [체지방 불태우는 전신 유산소 운동](https://youtu.be/gSz5n4sLENI?si=cF8UNYcY7O51vv3P)")
-            st.markdown("- [추천 영상 2] [층간소음 없는 전신 다이어트 루틴](https://youtu.be/dZbPtAgofwI?si=fGf1KFgcRwkiR2LU)")
-            with st.expander("ℹ️ 운동 가이드 설명 보기"):
-                st.write("집에서 별도의 기구 없이 체지방을 걷어낼 수 있는 맨몸 전신 루틴입니다. 컨디션에 맞춰 속도를 조절하세요.")
-                
-        elif target_part == "상체 (가슴/팔)":
-            st.markdown("- [추천 영상 1] [매끈하고 탄력 있는 상체 라인 만들기](https://youtu.be/2swcod5RYvU?si=PiprFfrdaW4POwqI)")
-            st.markdown("- [추천 영상 2] [초보자도 쉽게 따라하는 상체 무기구 루틴](https://youtu.be/T-bVqdhqW2U?si=O7RwqaDiVpioeKs7)")
-            with st.expander("ℹ️ 운동 가이드 설명 보기"):
-                st.write("굽은 등과 어깨를 펴주고 상체 탄력을 잡아주는 홈트레이닝입니다. 호흡에 집중하며 동작을 수행하세요.")
-                
-        elif target_part == "하체 (엉덩이/허벅지)":
-            st.markdown("- [추천 영상 1] [하체 비만 탈출 최고의 하체 스트레칭 & 운동](https://youtu.be/dpBYYEhdofI?si=OGiy3ZdSSRCdd__q)")
-            st.markdown("- [추천 영상 2] [허벅지 안쪽 살 파괴 맨몸 하체 루틴](https://youtu.be/NDsjmxTROEo?si=Kx28BPvmyhy8FS4u)")
-            with st.expander("ℹ️ 운동 가이드 설명 보기"):
-                st.write("골반 교정과 허벅지 라인 정리에 효과적인 운동입니다. 고체중이신 경우 무릎 관절 통증에 유의해 가동 범위를 조절하세요.")
-                
-        elif target_part == "코어 (복부/허리)":
-            st.markdown("- [추천 영상 1] [복부 지방 태우는 뱃살 타파 코어 루틴](https://youtu.be/jpTQdM7okkI?si=Iul-MhU62OggKOCP)")
-            st.markdown("- [추천 영상 2] [허리 통증 없이 안전하게 코어 강화하기](https://youtu.be/iOSYLKBk894?si=B606cM5LgWwS1T5j)")
-            with st.expander("ℹ️ 운동 가이드 설명 보기"):
-                st.write("단순히 윗몸일으키기 대신 허리를 안전하게 보호하면서 복부 심층 근육을 자극하는 똑똑한 코어 훈련입니다.")
-
-    # -------------------------------------------------------------
-    # Case B: 헬스장 (Gym) 루틴 분기
-    # -------------------------------------------------------------
+    if condition == "컨디션 최고! 🔥":
+        cond_msg = "영상의 동작을 **최대 강도**로 완주하고 아래 추가 미션까지 도전해보세요!"
+        gym_set = "4세트"
+        home_mission = "💡 맨몸 스쿼트 20회 + 플랭크 1분 추가 진행!"
+    elif condition == "보통이에요 🙂":
+        cond_msg = "영상의 페이스를 그대로 유지하며 **정석 자세**에 집중하세요."
+        gym_set = "3세트"
+        home_mission = "💡 영상 가이드를 80% 이상 끈기 있게 따라하기!"
     else:
-        st.success(f"💪 수룡이가 추천하는 오늘의 헬스장 기구 루틴입니다. 기구 이름과 자세를 꼭 확인하세요!")
-        
-        if target_part == "상체 (가슴/팔)":
-            st.markdown("- [추천 강좌] [헬스장 상체 머신 완벽 가이드](https://youtu.be/Dw8PbebpF9w?si=5NIbj8CspBo_FwZl)")
-            
-            with st.expander("🏋️ [기구 1] 랫 풀 다운 (Lat Pull Down) - 등 운동"):
-                st.write("**자세한 설명 및 팁:**")
-                st.write("1. 바를 잡고 앉아 패드에 허벅지를 단단히 고정합니다.")
-                st.write("2. 가슴을 위로 활짝 열어준 상태에서 쇄골 방향으로 바를 당깁니다.")
-                st.write("3. 팔의 힘이 아니라 견갑골(날개뼈)을 아래로 접는다는 느낌으로 당겨야 등에 자극이 옵니다.")
-                st.write("⚠️ 주의: 허리가 과도하게 꺾이거나 어깨가 으쓱 올라가지 않도록 고정하세요.")
-                
-            with st.expander("🏋️ [기구 2] 체스트 프레스 (Chest Press) - 가슴 운동"):
-                st.write("**자세한 설명 및 팁:**")
-                st.write("1. 의자 높이를 조절하여 손잡이가 가슴 중앙 라인에 오도록 맞춥니다.")
-                st.write("2. 겨드랑이에 힘을 주고 손잡이를 앞으로 강하게 밀어줍니다.")
-                st.write("3. 버티면서 천천히 이완하며 처음 자세로 돌아옵니다.")
-                
+        cond_msg = "영상의 **속도를 낮추거나, 무리한 동작은 건너뛰고 스트레칭 위주**로 진행하세요."
+        gym_set = "2세트 (자극 중심)"
+        home_mission = "💡 너무 힘들다면 영상을 앞쪽 10분만 따라 한 뒤 휴식하기!"
+
+    st.warning(f"🌡️ **오늘의 컨디션 케어 멘트**: {cond_msg}")
+
+    # 장소별 가이드 출력
+    if place_style == "홈트레이닝 (집)":
+        st.success(f"🏠 오늘의 추천 홈트 영상")
+        if target_part == "전신":
+            st.markdown("- [추천 영상 1](https://youtu.be/gSz5n4sLENI?si=cF8UNYcY7O51vv3P) / [추천 영상 2](https://youtu.be/dZbPtAgofwI?si=fGf1KFgcRwkiR2LU)")
+        elif target_part == "상체 (가슴/팔)":
+            st.markdown("- [추천 영상 1](https://youtu.be/2swcod5RYvU?si=PiprFfrdaW4POwqI) / [추천 영상 2](https://youtu.be/T-bVqdhqW2U?si=O7RwqaDiVpioeKs7)")
         elif target_part == "하체 (엉덩이/허벅지)":
-            st.markdown("- [추천 강좌] [헬스장 하체 머신 완벽 가이드](https://youtu.be/Na0Dhue1oqk?si=4VvIt7heeGHHV4Yd)")
-            
-            with st.expander("🏋️ [기구 1] 레그 프레스 (Leg Press) - 하체 전반"):
-                st.write("**자세한 설명 및 팁:**")
-                st.write("1. 발판에 발을 어깨너비로 올리고 엉덩이와 등을 등받이에 완전히 밀착시킵니다.")
-                st.write("2. 안전바를 풀고 무릎이 직각이 될 때까지 천천히 내렸다가, 발바닥 전체로 밀어 올립니다.")
-                st.write("⚠️ 주의: 무릎을 펼 때 관절을 튕기듯 끝까지 다 펴면 부상 위험이 있으니 95%만 펴주세요.")
-                
-            with st.expander("🏋️ [기구 2] 레그 익스텐션 (Leg Extension) - 허벅지 앞쪽"):
-                st.write("**자세한 설명 및 팁:**")
-                st.write("1. 의자에 앉아 발목 패드를 조절하여 정강이 아래쪽에 위치시킵니다.")
-                st.write("2. 손잡이를 꽉 쥐고 허벅지 앞쪽 힘으로 패드를 밀어 올리며 다리를 쭉 폅니다.")
-                st.write("3. 내릴 때도 무게를 버티며 천천히 내려옵니다.")
-
+            st.markdown("- [추천 영상 1](https://youtu.be/dpBYYEhdofI?si=OGiy3ZdSSRCdd__q) / [추천 영상 2](https://youtu.be/NDsjmxTROEo?si=Kx28BPvmyhy8FS4u)")
         elif target_part == "코어 (복부/허리)":
-            st.markdown("- [추천 숏츠 1] [행잉 레그 레이즈 꿀팁](https://youtube.com/shorts/ocMkMZya3ac?si=p89Dw6--vfRyqRNT)")
-            st.markdown("- [추천 숏츠 2] [케이블 크런치로 복근 만들기](https://youtube.com/shorts/bAFDWHA7fG8?si=ez9Av_2x54NiKXtj)")
-            with st.expander("ℹ️ 코어 운동 기구 및 자세 설명 보기"):
-                st.write("- **행잉 레그 레이즈**: 철봉에 매달려 복부 하부 힘으로 다리를 들어 올리는 상급자 코어 운동입니다. 반동을 줄여야 효과가 큽니다.")
-                st.write("- **케이블 크런치**: 케이블 머신의 무게를 활용해 무릎을 꿇고 복부를 수축시키는 상복부 기구 운동입니다. 허리가 아닌 명치를 쥐어짜는 느낌으로 진행하세요.")
-
+            st.markdown("- [추천 영상 1](https://youtu.be/jpTQdM7okkI?si=Iul-MhU62OggKOCP) / [추천 영상 2](https://youtu.be/iOSYLKBk894?si=B606cM5LgWwS1T5j)")
+        with st.expander("ℹ️ 홈트 가이드 설명 보기"):
+            st.write(home_mission)
+    else:
+        st.success(f"💪 오늘의 헬스장 추천 머신 루틴 ({gym_set}씩 수행)")
+        if target_part == "상체 (가슴/팔)":
+            st.markdown("- [추천 강좌 보기](https://youtu.be/Dw8PbebpF9w?si=5NIbj8CspBo_FwZl)")
+        elif target_part == "하체 (엉덩이/허벅지)":
+            st.markdown("- [추천 강좌 보기](https://youtu.be/Na0Dhue1oqk?si=4VvIt7heeGHHV4Yd)")
+        elif target_part == "코어 (복부/허리)":
+            st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ocMkMZya3ac?si=p89Dw6--vfRyqRNT) / [추천 숏츠 2](https://youtube.com/shorts/bAFDWHA7fG8?si=ez9Av_2x54NiKXtj)")
         elif target_part == "전신":
-            st.markdown("- [추천 숏츠 1] [헬스장 전신 버닝 루틴 추천](https://youtube.com/shorts/ul5GqyTSSIk?si=8NaZLXCPr0ykjo4M)")
-            st.markdown("- [추천 숏츠 2] [머신을 활용한 전신 서킷 트레이닝](https://youtube.com/shorts/1FZYk9OyxV0?si=ZtGUBllTgPrKHTcM)")
-            with st.expander("ℹ️ 전신 운동 기구 및 가이드 보기"):
-                st.write("짧고 굵게 심폐지구력과 전신 근력을 동시에 사용하여 칼로리 소모를 극대화하는 서킷 프로그램입니다. 기구 간 휴식 시간을 30초 이내로 유지해 보세요.")
+            st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ul5GqyTSSIk?si=8NaZLXCPr0ykjo4M) / [추천 숏츠 2](https://youtube.com/shorts/1FZYk9OyxV0?si=ZtGUBllTgPrKHTcM)")
+
+    # 💾 [핵심 기능] 오늘 하루 기록 저장하기 버튼 추가
+    st.subheader("💾 오늘의 다이어트 기록 최종 저장")
+    st.caption("식단 입력과 위의 운동 설정을 마친 후 아래 버튼을 누르면 매일 기록이 파일에 누적됩니다.")
+    
+    if st.button("🔥 오늘의 기록 저장하기"):
+        # 저장할 데이터 구성
+        new_data = {
+            "날짜": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "이름": name if name else "사용자",
+            "체중(kg)": weight,
+            "BMI": user_bmi,
+            "목표 칼로리": daily_calorie,
+            "오늘 섭취량": total,
+            "운동 장소": place_style,
+            "운동 부위": target_part,
+            "오늘 컨디션": condition
+        }
+        
+        # 기존 파일이 있으면 불러오고, 없으면 새로 만들기
+        if os.path.exists(LOG_FILE):
+            df = pd.read_csv(LOG_FILE)
+        else:
+            df = pd.DataFrame(columns=new_data.keys())
+            
+        # 새로운 데이터 추가
+        df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
+        # 파일 저장
+        df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
+        
+        st.success("🎉 기록이 성공적으로 일지에 저장되었습니다! '나의 누적 다이어트 일지' 탭에서 확인하세요.")
+
+# 📅 [핵심 기능] 저장된 다이어트 일지 조회 탭
+with tab3:
+    st.write("📅 **나의 누적 다이어트 일지**")
+    st.caption("그동안 기록했던 데이터들이 파일에 안전하게 보관되어 표출됩니다.")
+    
+    if os.path.exists(LOG_FILE):
+        df_log = pd.read_csv(LOG_FILE)
+        
+        # 최신 기록이 맨 위로 오도록 역순 출력
+        st.dataframe(df_log.iloc[::-1], use_container_width=True)
+        
+        # 간단한 누적 통계
+        st.subheader("📊 나의 다이어트 요약")
+        col_stat1, col_stat2 = st.columns(2)
+        with col_stat1:
+            st.metric("총 기록 일수", f"{len(df_log)} 일")
+        with col_stat2:
+            avg_cal = int(df_log["오늘 섭취량"].mean())
+            st.metric("평균 하루 섭취 칼로리", f"{avg_cal} kcal")
+            
+        # 데이터 초기화 버튼 제공
+        if st.checkbox("⚠️ 전체 기록 지우기 (초기화)"):
+            if st.button("정말 삭제하시겠습니까?"):
+                os.remove(LOG_FILE)
+                st.warning("모든 다이어트 기록이 영구 삭제되었습니다. 페이지를 새로고침 해주세요.")
+    else:
+        st.info("아직 저장된 다이어트 일지가 없습니다. '추천 운동 및 설정' 탭 하단에서 첫 기록을 저장해보세요!")
