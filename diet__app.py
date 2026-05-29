@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
+from streamlit_calendar import calendar  # 👈 달력 라이브러리 추가
 
 # 1. 페이지 설정
 st.set_page_config(
@@ -10,7 +11,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# [데이터 영구 저장을 위한 파일 경로 설정]
+# 데이터 영구 저장을 위한 파일 경로 설정
 LOG_FILE = "diet_exercise_log.csv"
 
 # [계산 함수 정의] ---------------------------------------------
@@ -178,8 +179,8 @@ with col_info:
 
 st.divider()
 
-# 6. 추천 기능 및 다이어트 일지 (탭 구성 변경)
-tab1, tab2, tab3 = st.tabs(["🍱 추천 식단", "🏃 추천 운동 및 설정", "📅 나의 누적 다이어트 일지"])
+# 6. 추천 기능 및 다이어트 일지 (달력 템플릿 연동)
+tab1, tab2, tab3 = st.tabs(["🍱 추천 식단", "🏃 추천 운동 및 설정", "📅 나의 캘린더 일지"])
 
 with tab1:
     st.write("✨ **수룡이가 엄선한 건강한 다이어트 추천 메뉴**")
@@ -190,7 +191,6 @@ with tab1:
     for f in recommended:
         st.write(f"- {f}: {foods[f]['calorie']} kcal")
 
-# 🏃 추천 운동 및 오늘 한 운동 확정 섹션
 with tab2:
     st.write("🏋️ **오늘 나의 상태에 딱 맞는 맞춤형 운동 프로그램**")
     
@@ -220,38 +220,25 @@ with tab2:
 
     st.warning(f"🌡️ **오늘의 컨디션 케어 멘트**: {cond_msg}")
 
-    # 장소별 가이드 출력
     if place_style == "홈트레이닝 (집)":
         st.success(f"🏠 오늘의 추천 홈트 영상")
-        if target_part == "전신":
-            st.markdown("- [추천 영상 1](https://youtu.be/gSz5n4sLENI?si=cF8UNYcY7O51vv3P) / [추천 영상 2](https://youtu.be/dZbPtAgofwI?si=fGf1KFgcRwkiR2LU)")
-        elif target_part == "상체 (가슴/팔)":
-            st.markdown("- [추천 영상 1](https://youtu.be/2swcod5RYvU?si=PiprFfrdaW4POwqI) / [추천 영상 2](https://youtu.be/T-bVqdhqW2U?si=O7RwqaDiVpioeKs7)")
-        elif target_part == "하체 (엉덩이/허벅지)":
-            st.markdown("- [추천 영상 1](https://youtu.be/dpBYYEhdofI?si=OGiy3ZdSSRCdd__q) / [추천 영상 2](https://youtu.be/NDsjmxTROEo?si=Kx28BPvmyhy8FS4u)")
-        elif target_part == "코어 (복부/허리)":
-            st.markdown("- [추천 영상 1](https://youtu.be/jpTQdM7okkI?si=Iul-MhU62OggKOCP) / [추천 영상 2](https://youtu.be/iOSYLKBk894?si=B606cM5LgWwS1T5j)")
-        with st.expander("ℹ️ 홈트 가이드 설명 보기"):
-            st.write(home_mission)
+        if target_part == "전신": st.markdown("- [추천 영상 1](https://youtu.be/gSz5n4sLENI) / [추천 영상 2](https://youtu.be/dZbPtAgofwI)")
+        elif target_part == "상체 (가슴/팔)": st.markdown("- [추천 영상 1](https://youtu.be/2swcod5RYvU) / [추천 영상 2](https://youtu.be/T-bVqdhqW2U)")
+        elif target_part == "하체 (엉덩이/허벅지)": st.markdown("- [추천 영상 1](https://youtu.be/dpBYYEhdofI) / [추천 영상 2](https://youtu.be/NDsjmxTROEo)")
+        elif target_part == "코어 (복부/허리)": st.markdown("- [추천 영상 1](https://youtu.be/jpTQdM7okkI) / [추천 영상 2](https://youtu.be/iOSYLKBk894)")
+        with st.expander("ℹ️ 홈트 가이드 설명 보기"): st.write(home_mission)
     else:
         st.success(f"💪 오늘의 헬스장 추천 머신 루틴 ({gym_set}씩 수행)")
-        if target_part == "상체 (가슴/팔)":
-            st.markdown("- [추천 강좌 보기](https://youtu.be/Dw8PbebpF9w?si=5NIbj8CspBo_FwZl)")
-        elif target_part == "하체 (엉덩이/허벅지)":
-            st.markdown("- [추천 강좌 보기](https://youtu.be/Na0Dhue1oqk?si=4VvIt7heeGHHV4Yd)")
-        elif target_part == "코어 (복부/허리)":
-            st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ocMkMZya3ac?si=p89Dw6--vfRyqRNT) / [추천 숏츠 2](https://youtube.com/shorts/bAFDWHA7fG8?si=ez9Av_2x54NiKXtj)")
-        elif target_part == "전신":
-            st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ul5GqyTSSIk?si=8NaZLXCPr0ykjo4M) / [추천 숏츠 2](https://youtube.com/shorts/1FZYk9OyxV0?si=ZtGUBllTgPrKHTcM)")
+        if target_part == "상체 (가슴/팔)": st.markdown("- [추천 강좌 보기](https://youtu.be/Dw8PbebpF9w)")
+        elif target_part == "하체 (엉덩이/허벅지)": st.markdown("- [추천 강좌 보기](https://youtu.be/Na0Dhue1oqk)")
+        elif target_part == "코어 (복부/허리)": st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ocMkMZya3ac) / [추천 숏츠 2](https://youtube.com/shorts/bAFDWHA7fG8)")
+        elif target_part == "전신": st.markdown("- [추천 숏츠 1](https://youtube.com/shorts/ul5GqyTSSIk) / [추천 숏츠 2](https://youtube.com/shorts/1FZYk9OyxV0)")
 
-    # 💾 [핵심 기능] 오늘 하루 기록 저장하기 버튼 추가
     st.subheader("💾 오늘의 다이어트 기록 최종 저장")
-    st.caption("식단 입력과 위의 운동 설정을 마친 후 아래 버튼을 누르면 매일 기록이 파일에 누적됩니다.")
     
     if st.button("🔥 오늘의 기록 저장하기"):
-        # 저장할 데이터 구성
         new_data = {
-            "날짜": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "날짜": datetime.now().strftime("%Y-%m-%d"), # 캘린더 연동을 위해 날짜 포맷 최적화
             "이름": name if name else "사용자",
             "체중(kg)": weight,
             "BMI": user_bmi,
@@ -262,43 +249,77 @@ with tab2:
             "오늘 컨디션": condition
         }
         
-        # 기존 파일이 있으면 불러오고, 없으면 새로 만들기
         if os.path.exists(LOG_FILE):
             df = pd.read_csv(LOG_FILE)
         else:
             df = pd.DataFrame(columns=new_data.keys())
             
-        # 새로운 데이터 추가
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
-        # 파일 저장
         df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
-        
-        st.success("🎉 기록이 성공적으로 일지에 저장되었습니다! '나의 누적 다이어트 일지' 탭에서 확인하세요.")
+        st.success("🎉 기록이 성공적으로 일지에 저장되었습니다! '나의 캘린더 일지' 탭을 누르면 달력에서 볼 수 있습니다.")
 
-# 📅 [핵심 기능] 저장된 다이어트 일지 조회 탭
+# 📅 [대폭 개편] 캘린더 시각화 탭
 with tab3:
-    st.write("📅 **나의 누적 다이어트 일지**")
-    st.caption("그동안 기록했던 데이터들이 파일에 안전하게 보관되어 표출됩니다.")
+    st.write("📅 **수룡이 시각화 다이어트 캘린더**")
+    st.caption("저장한 기록들이 날짜별로 달력 위에 배지로 예쁘게 표시됩니다.")
+    
+    # 달력 기본 설정 값
+    calendar_options = {
+        "headerToolbar": {
+            "left": "prev,next today",
+            "center": "title",
+            "right": "dayGridMonth,timeGridWeek"
+        },
+        "initialView": "dayGridMonth",
+        "selectable": True,
+    }
+    
+    # 캘린더에 뿌려줄 이벤트 리스트 초기화
+    calendar_events = []
     
     if os.path.exists(LOG_FILE):
         df_log = pd.read_csv(LOG_FILE)
         
-        # 최신 기록이 맨 위로 오도록 역순 출력
-        st.dataframe(df_log.iloc[::-1], use_container_width=True)
-        
-        # 간단한 누적 통계
-        st.subheader("📊 나의 다이어트 요약")
-        col_stat1, col_stat2 = st.columns(2)
-        with col_stat1:
-            st.metric("총 기록 일수", f"{len(df_log)} 일")
-        with col_stat2:
-            avg_cal = int(df_log["오늘 섭취량"].mean())
-            st.metric("평균 하루 섭취 칼로리", f"{avg_cal} kcal")
+        # 3-1. CSV 데이터를 풀캘린더가 인식하는 Event 객체 배열로 변환
+        for _, row in df_log.iterrows():
+            date_str = str(row["날짜"])
             
-        # 데이터 초기화 버튼 제공
-        if st.checkbox("⚠️ 전체 기록 지우기 (초기화)"):
-            if st.button("정말 삭제하시겠습니까?"):
-                os.remove(LOG_FILE)
-                st.warning("모든 다이어트 기록이 영구 삭제되었습니다. 페이지를 새로고침 해주세요.")
+            # 식단 이벤트 배지 (녹색 계열)
+            calendar_events.append({
+                "title": f"🍏 식단: {row['오늘 섭취량']}kcal",
+                "start": date_str,
+                "end": date_str,
+                "backgroundColor": "#2ecc71",
+                "borderColor": "#2ecc71",
+            })
+            # 운동 이벤트 배지 (파란색 계열)
+            calendar_events.append({
+                "title": f"🏋️ {row['운동 장소']}-{row['운동 부위']}",
+                "start": date_str,
+                "end": date_str,
+                "backgroundColor": "#3498db",
+                "borderColor": "#3498db",
+            })
+            
+        # 3-2. 달력 컴포넌트 화면에 렌더링
+        state = calendar(events=calendar_events, options=calendar_options, key="diet_calendar")
+        
+        # 하단에 원본 표 데이터와 통계도 깔끔하게 서브로 유지
+        st.divider()
+        with st.expander("📊 누적 데이터 표 및 상세 통계 보기"):
+            st.dataframe(df_log.iloc[::-1], use_container_width=True)
+            col_stat1, col_stat2 = st.columns(2)
+            with col_stat1:
+                st.metric("총 기록 일수", f"{len(df_log)} 일")
+            with col_stat2:
+                avg_cal = int(df_log["오늘 섭취량"].mean()) if len(df_log) > 0 else 0
+                st.metric("평균 하루 섭취 칼로리", f"{avg_cal} kcal")
+                
+            if st.checkbox("⚠️ 전체 기록 지우기 (초기화)"):
+                if st.button("정말 삭제하시겠습니까?"):
+                    os.remove(LOG_FILE)
+                    st.warning("모든 다이어트 기록이 영구 삭제되었습니다. 페이지를 새로고침 해주세요.")
     else:
-        st.info("아직 저장된 다이어트 일지가 없습니다. '추천 운동 및 설정' 탭 하단에서 첫 기록을 저장해보세요!")
+        # 데이터가 없을 때는 빈 달력만 기본 노출
+        calendar(events=[], options=calendar_options, key="empty_calendar")
+        st.info("아직 저장된 다이어트 기록이 없습니다. '추천 운동 및 설정' 탭에서 [오늘의 기록 저장하기]를 먼저 눌러보세요!")
