@@ -39,7 +39,7 @@ foods = {
 }
 
 # 앱 제목
-st.title("🐉 수룡이 다이어트 메이트")
+st.title("🐉 핏메이트")
 st.caption("식단의 질과 칼로리를 모두 분석하는 똑똑한 다이어트 앱")
 
 st.divider()
