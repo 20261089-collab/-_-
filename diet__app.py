@@ -258,22 +258,63 @@ with tab2:
         df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
         st.success("🎉 기록이 성공적으로 일지에 저장되었습니다! '나의 캘린더 일지' 탭을 누르면 달력에서 볼 수 있습니다.")
 
-# 📅 [대폭 개편] 캘린더 시각화 탭
+# 📅 [서버 안정형] 캘린더 시각화 탭 (에러 없는 내장 기능 버전)
 with tab3:
     st.write("📅 **수룡이 시각화 다이어트 캘린더**")
-    st.caption("저장한 기록들이 날짜별로 달력 위에 배지로 예쁘게 표시됩니다.")
+    st.caption("저장한 기록들을 날짜별로 요약하여 시각적으로 보여줍니다.")
     
-    # 달력 기본 설정 값
-    calendar_options = {
-        "headerToolbar": {
-            "left": "prev,next today",
-            "center": "title",
-            "right": "dayGridMonth,timeGridWeek"
-        },
-        "initialView": "dayGridMonth",
-        "selectable": True,
-    }
-    
+    if os.path.exists(LOG_FILE):
+        df_log = pd.read_csv(LOG_FILE)
+        
+        if not df_log.empty:
+            # 날짜별로 그룹화하여 하루 총 섭취량과 대표 운동 장소/부위 추출
+            df_summary = df_log.groupby("날짜").agg({
+                "오늘 섭취량": "sum",
+                "목표 칼로리": "first",
+                "운동 장소": lambda x: ", ".join(x.unique()),
+                "운동 부위": lambda x: ", ".join(x.unique())
+            }).reset_index()
+            
+            # 1. 시각화 피드백: 날짜 선택기(Calendar Picker) 형태로 일지 확인하기
+            st.subheader("🔍 날짜별 다이어트 상세 기록 조회")
+            available_dates = df_summary["날짜"].unique()
+            selected_date = st.selectbox("기록을 확인하고 싶은 날짜를 선택하세요 👇", sorted(available_dates, reverse=True))
+            
+            # 선택한 날짜의 데이터만 쏙 뽑아서 카드 형태로 예쁘게 표출
+            day_data = df_summary[df_summary["날짜"] == selected_date].iloc[0]
+            
+            c_box1, c_box2, c_box3 = st.columns(3)
+            with c_box1:
+                st.info(f"🍏 **총 섭취량**\n\n{day_data['오늘 섭취량']} / {day_data['목표 칼로리']} kcal")
+            with c_box2:
+                st.success(f"🏢 **운동 장소**\n\n{day_data['운동 장소']}")
+            with c_box3:
+                st.warning(f"🎯 **운동 부위**\n\n{day_data['운동 부위']}")
+                
+            # 2. 칼로리 변화 추이 그래프 (달력 대신 시각적으로 한눈에 보는 용도)
+            st.subheader("📈 최근 칼로리 섭취 추이")
+            st.bar_chart(data=df_summary, x="날짜", y="오늘 섭취량", color="#2ecc71")
+            
+        else:
+            st.info("아직 저장된 다이어트 기록이 없습니다.")
+            
+        # 하단 원본 데이터 표 
+        st.divider()
+        with st.expander("📊 누적 데이터 표 및 상세 통계 보기", expanded=True):
+            st.dataframe(df_log.iloc[::-1], use_container_width=True)
+            col_stat1, col_stat2 = st.columns(2)
+            with col_stat1:
+                st.metric("총 기록 일수", f"{len(df_log)} 일")
+            with col_stat2:
+                avg_cal = int(df_log["오늘 섭취량"].mean()) if len(df_log) > 0 else 0
+                st.metric("평균 하루 섭취 칼로리", f"{avg_cal} kcal")
+                
+            if st.checkbox("⚠️ 전체 기록 지우기 (초기화)"):
+                if st.button("정말 삭제하시겠습니까?"):
+                    os.remove(LOG_FILE)
+                    st.warning("모든 다이어트 기록이 영구 삭제되었습니다. 페이지를 새로고침 해주세요.")
+    else:
+        st.info("아직 저장된 다이어트 기록이 없습니다. '추천 운동 및 설정' 탭에서 [오늘의 기록 저장하기]를 먼저 눌러보세요!")
     # 캘린더에 뿌려줄 이벤트 리스트 초기화
     calendar_events = []
     
