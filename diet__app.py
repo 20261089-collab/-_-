@@ -7,23 +7,15 @@ st.set_page_config(
     layout="centered"
 )
 
-# [새로 추가된 함수들] ---------------------------------------------
+# [계산 함수 정의] ---------------------------------------------
 def calculate_bmi(weight, height):
     h = height / 100
     return round(weight / (h**2), 1)
 
 def calculate_bmr(weight, height, age, gender):
     if gender == "남자":
-        return round(
-            10 * weight +
-            6.25 * height -
-            5 * age + 5
-        )
-    return round(
-        10 * weight +
-        6.25 * height -
-        5 * age - 161
-    )
+        return round(10 * weight + 6.25 * height - 5 * age + 5)
+    return round(10 * weight + 6.25 * height - 5 * age - 161)
 
 def calculate_tdee(bmr, activity):
     factors = {
@@ -36,7 +28,7 @@ def calculate_tdee(bmr, activity):
     return round(bmr * factors[activity])
 # -----------------------------------------------------------------
 
-# 2. 음식 데이터 정의 (다이어트 건강도 태그 'is_healthy' 반영)
+# 2. 음식 데이터 정의
 foods = {
     "김밥": {"calorie": 450, "type": "한식", "is_healthy": True},
     "참치김밥": {"calorie": 500, "type": "한식", "is_healthy": True},
@@ -86,7 +78,6 @@ with col2:
 with col3:
     weight = st.number_input("몸무게(kg)", min_value=1.0, value=60.0)
 
-# 제공해주신 factors 딕셔너리 키 값에 맞게 리스트 수정
 activity = st.selectbox("활동량", ["거의 안 움직임", "가벼운 활동", "보통", "활발함", "매우 활발"])
 goal = st.selectbox("목표", ["감량", "유지", "근육증가"])
 
@@ -94,12 +85,11 @@ allergy = st.text_input("알레르기 음식", value="없음")
 dislike = st.text_input("싫어하는 음식", value="없음")
 food_style = st.selectbox("선호 식단", ["한식", "가벼운식단", "단백질", "간단식", "분식", "중식", "양식", "일식", "간식", "패스트푸드"])
 
-# [함수를 활용한 건강 지표 계산]
+# 건강 지표 계산
 user_bmi = calculate_bmi(weight, height)
 user_bmr = calculate_bmr(weight, height, age, gender)
 user_tdee = calculate_tdee(user_bmr, activity)
 
-# 목표에 따른 최종 권장 칼로리 설정
 if goal == "감량":
     daily_calorie = user_tdee - 300
 elif goal == "근육증가":
@@ -111,40 +101,32 @@ st.divider()
 
 # 4. 음식 기록 섹션
 st.header("🍽️ 오늘 먹은 음식 기록")
-st.caption("💡 불닭볶음면, 치킨 등 배달 음식도 여기에 솔직하게 기록해서 수룡이의 반응을 살펴보세요!")
 selected_foods = st.multiselect("오늘 어떤 음식을 드셨나요?", list(foods.keys()))
 
 total = 0
 healthy_count = 0
 unhealthy_count = 0
 
-# 먹은 음식 분류 시스템
 for food in selected_foods:
     total += foods[food]["calorie"]
-    if foods[food]["is_healthy"]:
-        healthy_count += 1
-    else:
-        unhealthy_count += 1
+    if foods[food]["is_healthy"]: healthy_count += 1
+    else: unhealthy_count += 1
 
-# 음식 분류 결과 화면에 예쁘게 갈라주기
 if selected_foods:
     col_h, col_uh = st.columns(2)
     with col_h:
         st.write("🍏 **다이어트에 좋은 식단**")
         for food in selected_foods:
-            if foods[food]["is_healthy"]:
-                st.write(f"- {food} ({foods[food]['calorie']} kcal)")
+            if foods[food]["is_healthy"]: st.write(f"- {food} ({foods[food]['calorie']} kcal)")
     with col_uh:
         st.write("😈 **다이어트를 방해하는 식단**")
         for food in selected_foods:
-            if not foods[food]["is_healthy"]:
-                st.write(f"- {food} ({foods[food]['calorie']} kcal)")
+            if not foods[food]["is_healthy"]: st.write(f"- {food} ({foods[food]['calorie']} kcal)")
 
-# 5. 수룡이 게임화면 🐉
+# 5. 수룡이 게임화면
 st.divider()
 st.header("🎮 수룡이의 현재 상태")
 
-# 수룡이 상태 결정 로직
 if total == 0:
     suryong_img = "normal_suryong.jpg"
     suryong_msg = f"배가 고파요! 오늘 먹은 음식을 기록해주세요. (현재 BMI: {user_bmi})"
@@ -166,89 +148,104 @@ else:
     suryong_msg = "완벽해요! 클린하고 건강하게 목표 칼로리 채우기 성공! 수룡이가 따봉을 날립니다! 👍"
     status_color = "success"
 
-# 화면 레이아웃 분할
 col_char, col_info = st.columns([1, 1])
-
 with col_char:
-    try:
-        st.image(suryong_img, use_container_width=True)
-    except:
-        st.error(f"⚠️ 저장소에서 '{suryong_img}' 파일을 찾을 수 없습니다.")
+    try: st.image(suryong_img, use_container_width=True)
+    except: st.error(f"⚠️ 저장소에서 '{suryong_img}' 파일을 찾을 수 없습니다.")
 
 with col_info:
-    # 이름 라벨 판단 패치
     if name:
         last_char = name[-1]
-        if (ord(last_char) - 0xAC00) % 28 > 0:
-            name_with_josa = f"{name}님"
-        else:
-            name_with_josa = name
+        name_with_josa = f"{name}님" if (ord(last_char) - 0xAC00) % 28 > 0 else name
         st.subheader(f"🐲 {name_with_josa}의 수룡이")
     else:
         st.subheader("🐲 사용자님의 수룡이")
 
-    if status_color == "info":
-        st.info(suryong_msg)
-    elif status_color == "error":
-        st.error(suryong_msg)
-    elif status_color == "warning":
-        st.warning(suryong_msg)
-    else:
-        st.success(suryong_msg)
+    if status_color == "info": st.info(suryong_msg)
+    elif status_color == "error": st.error(suryong_msg)
+    elif status_color == "warning": st.warning(suryong_msg)
+    else: st.success(suryong_msg)
 
-    # 대시보드 스펙 출력 개선 (BMI 수치 추가!)
     st.metric("나의 BMI 지수", f"{user_bmi}")
-    st.metric("목표 권장 칼로리 (TDEE 기반)", f"{daily_calorie} kcal")
+    st.metric("목표 권장 칼로리", f"{daily_calorie} kcal")
     st.metric("현재 섭취량", f"{total} kcal", delta=total - daily_calorie, delta_color="inverse")
 
 st.divider()
 
-# 6. 추천 기능들 (하단 배치)
+# 6. 추천 기능들
 tab1, tab2 = st.tabs(["🍱 추천 식단", "🏃 추천 운동"])
 
 with tab1:
     st.write("✨ **수룡이가 엄선한 건강한 다이어트 추천 메뉴**")
-
-    recommended = [
-        f for f in foods
-        if foods[f]["type"] == food_style
-           and foods[f]["is_healthy"] == True
-           and allergy not in f
-           and dislike not in f
-    ]
-
+    recommended = [f for f in foods if foods[f]["type"] == food_style and foods[f]["is_healthy"] == True and allergy not in f and dislike not in f]
     if not recommended:
         st.warning(f"선택하신 '{food_style}' 카테고리에는 다이어트 전용 추천 식단이 없습니다. 대신 수룡이의 추천 클린 식단을 제공합니다!")
         recommended = ["샐러드", "닭가슴살", "고구마", "계란", "현미밥"]
-
     for f in recommended:
         st.write(f"- {f}: {foods[f]['calorie']} kcal")
 
+# 🏃 [대개편] BMI + 운동 부위 + 오늘 컨디션 기반 추천 시스템
 with tab2:
-    exercise_time = st.slider("운동 시간 선택(분)", 10, 120, 30, key="ex_slider")
+    st.write("🏋️ **오늘 나의 상태에 딱 맞는 맞춤형 운동 프로그램**")
+    
+    # 입력 UI 세분화
+    ex_col1, ex_col2, ex_col3 = st.columns(3)
+    with ex_col1:
+        target_part = st.selectbox("운동 부위 설정 🎯", ["전신", "상체 (가슴/팔)", "하체 (엉덩이/허벅지)", "코어 (복부/허리)"])
+    with ex_col2:
+        condition = st.selectbox("오늘의 컨디션 🌡️", ["컨디션 최고! 🔥", "보통이에요 🙂", "피곤하고 무거워요 😴"])
+    with ex_col3:
+        exercise_time = st.slider("운동 시간 선택(분) ⏳", 10, 120, 30)
 
-    if goal == "감량":
-        if exercise_time <= 20:
-            exercise = f"빠르게 걷기 {exercise_time}분 (가볍게 땀 흘리기!)"
-        elif exercise_time <= 40:
-            exercise = f"유산소 번갈아 뛰기 {exercise_time - 10}분 + 스쿼트 20개 + 플랭크 1분"
-        else:
-            exercise = f"러닝 {exercise_time - 20}분 + 스쿼트 30개 + 런지 20개 + 플랭크 2분"
-    elif goal == "근육증가":
-        if exercise_time <= 20:
-            half = exercise_time // 2
-            exercise = f"스쿼트 {half}분 + 푸쉬업 {half}분 (맨몸 근력 집중!)"
-        elif exercise_time <= 40:
-            exercise = f"스쿼트 30개 + 푸쉬업 20개 + 런지 20개"
-        else:
-            exercise = f"부위별 웨이트 트레이닝 {exercise_time - 10}분 + 전신 스트레칭 10분"
-    else:  # 유지
-        if exercise_time <= 20:
-            exercise = f"가벼운 전신 스트레칭 및 제자리 걷기 {exercise_time}분"
-        elif exercise_time <= 40:
-            exercise = f"동네 가볍게 산책하기 {exercise_time - 10}분 + 요가 10분"
-        else:
-            exercise = f"빠르게 걷기 {exercise_time - 15}분 + 마무리 스트레칭 15분"
+    # 1단계: BMI 기반 강도 조절 (고체중자는 관절 부담을 줄이는 유산소/맨몸 운동 유도)
+    if user_bmi >= 25.0:
+        bmi_status = "고체중 (관절 보호 필요)"
+        intensity_modifier = 0.7  # 운동 개수나 세트 수를 유연하게 하향 조정
+    elif user_bmi < 18.5:
+        bmi_status = "저체중 (근력 강화 중심)"
+        intensity_modifier = 0.8  # 과도한 칼로리 소모 방지, 고중량 저반복 지향
+    else:
+        bmi_status = "정상 체중"
+        intensity_modifier = 1.0
 
-    st.info(f"🏃 {name if name else '사용자'}님을 위한 {exercise_time}분 맞춤 운동 가이드")
-    st.success(f"추천 루틴: {exercise}")
+    # 2단계: 컨디션 계수 설정
+    if condition == "컨디션 최고! 🔥":
+        cond_bonus = "고강도 트레이닝 가능"
+        set_count = int(4 * intensity_modifier) or 1
+    elif condition == "보통이에요 🙂":
+        cond_bonus = "적정 강도 유지"
+        set_count = int(3 * intensity_modifier) or 1
+    else:  # 피곤함
+        cond_bonus = "컨디션 조절 및 스트레칭 중심"
+        set_count = int(2 * intensity_modifier) or 1
+
+    # 3단계: 부위별 운동 풀(Pool) 정의
+    routines = {
+        "전신": ["버피 테스트", "점핑잭(팔벌려뛰기)", "슬로우 버피", "마운틴 클라이머"],
+        "상체 (가슴/팔)": ["푸쉬업", "무릎 대고 푸쉬업", "덤벨 숄더 프레스", "체어 딥스"],
+        "하체 (엉덩이/허벅지)": ["스쿼트", "와이드 스쿼트", "런지", "힙 브릿지"],
+        "코어 (복부/허리)": ["플랭크", "크런치", "레그 레이즈", "버드독"]
+    }
+
+    # 고체중(BMI >= 25) 관절 보호를 위한 운동 대체 로직
+    if user_bmi >= 25.0:
+        if "버피 테스트" in routines["전신"]: routines["전신"][0] = "슬로우 버피 (관절 보호)"
+        if "푸쉬업" in routines["상체 (가슴/팔)"]: routines["상체 (가슴/팔)"][0] = "무릎 대고 푸쉬업"
+        if "스쿼트" in routines["하체 (엉덩이/허벅지)"]: routines["하체 (엉덩이/허벅지)"][0] = "하프 스쿼트"
+
+    # 컨디션이 나쁘면 무조건 가벼운 맨몸/스트레칭 형태로 멘트 변경
+    selected_exercises = routines[target_part]
+    
+    st.info(f"📋 **분석 리포트**: {bmi_status} 상태이며, 오늘의 컨디션은 [{cond_bonus}]입니다.")
+    
+    st.write(f"💪 **추천 {target_part} 루틴 ({exercise_time}분 코스)**")
+    if condition == "피곤하고 무거워요 😴":
+        st.write(f"1️⃣ 가벼운 전신 스트레칭 및 폼롤러 루틴 (10분)")
+        st.write(f"2️⃣ 저강도 {selected_exercises[1]} 및 {selected_exercises[3]} (각 {set_count}세트, 무리하지 않기)")
+        st.write(f"3️⃣ 심호흡 및 마무리 걷기 ({exercise_time - 15 if exercise_time > 15 else 5}분)")
+    else:
+        st.write(f"1️⃣ 웜업: 제자리 걷기 또는 가벼운 스트레칭 (5분)")
+        st.write(f"2️⃣ 메인 운동: 아래 동작을 순서대로 진행하세요!")
+        for ex in selected_exercises[:3]:
+            st.write(f"   - **{ex}**: 15회씩 총 {set_count}세트 수행")
+        st.write(f"3️⃣ 유산소 마무리: 설정하신 시간에 맞춰 남은 **{max(10, exercise_time - 25)}분** 동안 유산소(걷기/인터벌)를 진행하세요.")
